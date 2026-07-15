@@ -154,19 +154,33 @@ pipeline {
                         echo "Updating Kubeconfig for EKS..."
                         sh "aws eks update-kubeconfig --name ${params.ENVIRONMENT}-${params.CLUSTER_NAME} --region ${params.AWS_REGION}"
                         
-                        // Extract output variables from Terraform output
-                        def executionRoleArn = sh(script: "terraform -chdir=terraform output -raw emr_execution_role_arn", returnStdout: true).trim()
-                        def emrNamespace = sh(script: "terraform -chdir=terraform output -raw emr_namespace", returnStdout: true).trim() || 'emr-jobs'
+                        // Safe extraction of Terraform outputs with try-catch and default fallbacks
+                        def executionRoleArn = "arn:aws:iam::786461327180:role/${params.ENVIRONMENT}-emr-spark-execution-role"
+                        try {
+                            executionRoleArn = sh(script: "terraform -chdir=terraform output -raw emr_execution_role_arn", returnStdout: true).trim()
+                        } catch (Exception e) {
+                            echo "⚠️ Could not retrieve executionRoleArn from Terraform state, using default: ${executionRoleArn}"
+                        }
+
+                        def emrNamespace = "emr-jobs"
+                        try {
+                            def outputNs = sh(script: "terraform -chdir=terraform output -raw emr_namespace", returnStdout: true).trim()
+                            if (outputNs && outputNs != "true") {
+                                emrNamespace = outputNs
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️ Could not retrieve emrNamespace from Terraform state, using default: ${emrNamespace}"
+                        }
                         
                         echo "Deploying Helm configurations for EMR on EKS Namespace: ${emrNamespace}..."
                         sh """
                             helm upgrade --install platform-charts ./helm/platform-charts \
-                                --namespace ${emrNamespace} \
+                                --namespace "${emrNamespace}" \
                                 --create-namespace \
                                 --set global.environment=${params.ENVIRONMENT} \
                                 --set global.awsRegion=${params.AWS_REGION} \
-                                --set emrOnEks.namespace=${emrNamespace} \
-                                --set emrOnEks.awsIamRoleArn=${executionRoleArn}
+                                --set emrOnEks.namespace="${emrNamespace}" \
+                                --set emrOnEks.awsIamRoleArn="${executionRoleArn}"
                         """
                     }
                 }
