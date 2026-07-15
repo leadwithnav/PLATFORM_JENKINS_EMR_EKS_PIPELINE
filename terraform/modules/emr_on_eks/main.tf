@@ -215,7 +215,7 @@ resource "kubernetes_config_map_v1_data" "aws_auth" {
         groups:
           - system:bootstrappers
           - system:nodes
-      - rolearn: arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForEMRContainers
+      - rolearn: arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForAmazonEMRContainers
         username: emr-containers
         groups:
           - system:authenticated
