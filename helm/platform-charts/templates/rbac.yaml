@@ -1,0 +1,58 @@
+{{- if .Values.emrOnEks.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.emrOnEks.serviceAccountName }}
+  namespace: {{ .Values.emrOnEks.namespace }}
+  annotations:
+    eks.amazonaws.com/role-arn: {{ .Values.emrOnEks.awsIamRoleArn | quote }}
+  labels:
+    app.kubernetes.io/name: emr-on-eks-spark
+    app.kubernetes.io/component: execution-sa
+---
+# RBAC for EMR execution: allow running Spark jobs
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: emr-spark-role
+  namespace: {{ .Values.emrOnEks.namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/status", "configmaps", "services", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: emr-spark-rolebinding
+  namespace: {{ .Values.emrOnEks.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.emrOnEks.serviceAccountName }}
+    namespace: {{ .Values.emrOnEks.namespace }}
+roleRef:
+  kind: Role
+  name: emr-spark-role
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
+
+{{- if .Values.resourceQuotas.enabled }}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: emr-namespace-quota
+  namespace: {{ .Values.emrOnEks.namespace }}
+spec:
+  hard:
+    requests.cpu: {{ .Values.resourceQuotas.requests.cpu | quote }}
+    requests.memory: {{ .Values.resourceQuotas.requests.memory | quote }}
+    limits.cpu: {{ .Values.resourceQuotas.limits.cpu | quote }}
+    limits.memory: {{ .Values.resourceQuotas.limits.memory | quote }}
+{{- end }}

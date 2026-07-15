@@ -1,0 +1,23 @@
+# Default values for platform-charts.
+# This is a YAML-formatted file.
+
+global:
+  environment: "dev"
+  awsRegion: "us-east-1"
+
+emrOnEks:
+  enabled: true
+  namespace: "emr-jobs"
+  serviceAccountName: "emr-spark-executor"
+  # Replace with actual IAM execution role ARN in values overrides if needed
+  awsIamRoleArn: "arn:aws:iam::123456789012:role/EMRJobExecutionRole"
+
+# Resource quotas for the Spark namespace to ensure platform stability
+resourceQuotas:
+  enabled: true
+  limits:
+    cpu: "100"
+    memory: "400Gi"
+  requests:
+    cpu: "50"
+    memory: "200Gi"
