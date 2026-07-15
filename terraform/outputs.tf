@@ -34,3 +34,8 @@ output "emr_execution_role_arn" {
   description = "IAM Role ARN for EMR execution jobs"
   value       = module.emr_on_eks.emr_execution_role_arn
 }
+
+output "emr_namespace" {
+  description = "Kubernetes namespace for EMR jobs"
+  value       = var.emr_namespace
+}
