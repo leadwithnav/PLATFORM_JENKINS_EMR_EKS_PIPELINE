@@ -38,7 +38,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                withCredentials([aws(credentialsId: env.AWS_CRED_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     dir('terraform') {
                         echo "Initializing Terraform with remote S3 backend..."
                         sh """
@@ -83,7 +83,7 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                withCredentials([aws(credentialsId: env.AWS_CRED_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     dir('terraform') {
                         script {
                             if (params.ACTION == 'Destroy (Teardown)') {
@@ -120,7 +120,7 @@ pipeline {
                 expression { params.ACTION != 'Plan Only' }
             }
             steps {
-                withCredentials([aws(credentialsId: env.AWS_CRED_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     dir('terraform') {
                         script {
                             if (params.ACTION == 'Apply (Deploy)') {
@@ -141,7 +141,7 @@ pipeline {
                 expression { params.ACTION == 'Apply (Deploy)' }
             }
             steps {
-                withCredentials([aws(credentialsId: env.AWS_CRED_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     script {
                         echo "Updating Kubeconfig for EKS..."
                         sh "aws eks update-kubeconfig --name ${params.ENVIRONMENT}-${params.CLUSTER_NAME} --region ${params.AWS_REGION}"
@@ -170,7 +170,7 @@ pipeline {
                 expression { params.ACTION == 'Apply (Deploy)' }
             }
             steps {
-                withCredentials([aws(credentialsId: env.AWS_CRED_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     script {
                         def virtualClusterId = sh(script: "terraform -chdir=terraform output -raw emr_virtual_cluster_id", returnStdout: true).trim()
                         
