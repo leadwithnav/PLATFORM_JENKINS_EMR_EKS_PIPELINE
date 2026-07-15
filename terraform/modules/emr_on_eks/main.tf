@@ -125,10 +125,10 @@ resource "aws_emrcontainers_virtual_cluster" "this" {
     Name = "${var.environment}-emr-virtual-cluster"
   }
 
-  # Ensure EKS Access Entry and K8s RBAC mapping are active BEFORE registering
+  # Ensure EKS auth mapping and K8s RBAC mapping are active BEFORE registering
   depends_on = [
     kubernetes_namespace.emr_namespace,
-    aws_eks_access_entry.emr_service_role,
+    kubernetes_config_map_v1_data.aws_auth,
     kubernetes_role_binding.emr_service
   ]
 }
@@ -198,13 +198,29 @@ resource "kubernetes_role_binding" "emr_service" {
   }
 }
 
-# 5. Access Entry to map the AWS EMR Service Linked Role in EKS
+# 5. Map the AWS EMR Service Linked Role in EKS using aws-auth ConfigMap
+# (AWS does not allow mapping Service Linked Roles via the EKS Access Entry API)
 data "aws_caller_identity" "current" {}
 
-resource "aws_eks_access_entry" "emr_service_role" {
-  cluster_name      = var.eks_cluster_name
-  principal_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForEMRContainers"
-  kubernetes_groups = ["system:authenticated"]
-  user_name         = "emr-containers"
-  type              = "STANDARD"
+resource "kubernetes_config_map_v1_data" "aws_auth" {
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+
+  data = {
+    mapRoles = <<-EOT
+      - rolearn: ${var.node_role_arn}
+        username: system:node:{{EC2PrivateDNSName}}
+        groups:
+          - system:bootstrappers
+          - system:nodes
+      - rolearn: arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForEMRContainers
+        username: emr-containers
+        groups:
+          - system:authenticated
+    EOT
+  }
+
+  force = true
 }

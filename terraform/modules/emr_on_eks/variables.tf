@@ -29,3 +29,8 @@ variable "emr_service_account_name" {
   description = "Service account for Spark executors"
   default     = "emr-spark-executor"
 }
+
+variable "node_role_arn" {
+  type        = string
+  description = "IAM Role ARN of the EKS worker nodes (for aws-auth mapping)"
+}

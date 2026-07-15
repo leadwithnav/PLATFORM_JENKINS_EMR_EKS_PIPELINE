@@ -36,6 +36,7 @@ module "emr_on_eks" {
   eks_oidc_issuer_url      = module.eks.cluster_oidc_issuer_url
   emr_namespace            = var.emr_namespace
   emr_service_account_name = "emr-spark-executor"
+  node_role_arn            = module.eks.node_role_arn
 
   depends_on = [module.eks]
 }
