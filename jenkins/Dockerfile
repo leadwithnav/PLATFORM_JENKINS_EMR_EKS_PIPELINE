@@ -25,8 +25,8 @@ RUN curl -LO "https://releases.hashicorp.com/terraform/1.9.2/terraform_1.9.2_lin
     && mv terraform /usr/local/bin/ \
     && rm terraform_1.9.2_linux_amd64.zip
 
-# 3. Install Kubectl (match EKS K8s version 1.28)
-RUN curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl" \
+# 3. Install Kubectl (match EKS K8s version 1.30)
+RUN curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl" \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl
 

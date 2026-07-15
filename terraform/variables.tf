@@ -27,7 +27,7 @@ variable "cluster_name" {
 variable "eks_version" {
   type        = string
   description = "Kubernetes version for the EKS Cluster."
-  default     = "1.28"
+  default     = "1.30"
 }
 
 variable "ecr_repo_name" {
