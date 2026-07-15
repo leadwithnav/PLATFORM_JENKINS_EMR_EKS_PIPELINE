@@ -36,6 +36,15 @@ pipeline {
             }
         }
 
+        stage('Bootstrap Backend') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    echo "Bootstrapping remote state backend (S3 & DynamoDB)..."
+                    sh "./scripts/bootstrap-backend.sh ${params.TF_STATE_BUCKET} ${params.TF_STATE_LOCK_TABLE} ${params.AWS_REGION}"
+                }
+            }
+        }
+
         stage('Terraform Init') {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
