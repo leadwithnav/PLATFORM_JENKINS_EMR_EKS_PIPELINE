@@ -205,6 +205,6 @@ resource "aws_eks_access_entry" "emr_service_role" {
   cluster_name      = var.eks_cluster_name
   principal_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForEMRContainers"
   kubernetes_groups = ["system:authenticated"]
-  username          = "emr-containers"
+  user_name         = "emr-containers"
   type              = "STANDARD"
 }
