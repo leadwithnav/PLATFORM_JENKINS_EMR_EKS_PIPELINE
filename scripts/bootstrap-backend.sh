@@ -6,19 +6,17 @@
 set -eo pipefail
 
 BUCKET_NAME=${1}
-TABLE_NAME=${2}
-REGION=${3}
+REGION=${2}
 
-if [ -z "$BUCKET_NAME" ] || [ -z "$TABLE_NAME" ] || [ -z "$REGION" ]; then
-    echo "❌ Error: BUCKET_NAME, TABLE_NAME, and REGION must be provided."
-    echo "Usage: $0 <bucket-name> <table-name> <region>"
+if [ -z "$BUCKET_NAME" ] || [ -z "$REGION" ]; then
+    echo "❌ Error: BUCKET_NAME and REGION must be provided."
+    echo "Usage: $0 <bucket-name> <region>"
     exit 1
 fi
 
 echo "===================================================="
 echo " Bootstrapping Terraform Backend Infrastructure..."
 echo " Target S3 Bucket:      $BUCKET_NAME"
-echo " Target DynamoDB Table: $TABLE_NAME"
 echo " AWS Region:            $REGION"
 echo "===================================================="
 
@@ -56,26 +54,7 @@ else
     echo "✅ S3 Bucket '$BUCKET_NAME' already exists and is accessible."
 fi
 
-# 2. Bootstrap DynamoDB Lock Table
-echo "Checking DynamoDB table existence..."
-if ! aws dynamodb describe-table --table-name "$TABLE_NAME" --region "$REGION" 2>/dev/null; then
-    echo "ℹ️ DynamoDB table '$TABLE_NAME' does not exist. Creating table..."
-    
-    aws dynamodb create-table \
-        --table-name "$TABLE_NAME" \
-        --attribute-definitions AttributeName=LockID,AttributeType=S \
-        --key-schema AttributeName=LockID,KeyType=HASH \
-        --billing-mode PAY_PER_REQUEST \
-        --region "$REGION"
-        
-    echo "Waiting for DynamoDB table to become active..."
-    aws dynamodb wait table-exists \
-        --table-name "$TABLE_NAME" \
-        --region "$REGION"
-    echo "✅ Successfully created DynamoDB table '$TABLE_NAME'."
-else
-    echo "✅ DynamoDB table '$TABLE_NAME' already exists."
-fi
+
 
 echo "===================================================="
 echo "✅ State backend bootstrap completed successfully!"

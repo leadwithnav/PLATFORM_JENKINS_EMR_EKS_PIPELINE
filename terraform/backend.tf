@@ -7,7 +7,6 @@ terraform {
     bucket         = "platform-terraform-state-bucket"
     key            = "environments/env-name/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "platform-terraform-state-locks"
     encrypt        = true
   }
 }
