@@ -40,3 +40,22 @@ module "emr_on_eks" {
 
   depends_on = [module.eks]
 }
+
+# 5. Publish Environment Contract to AWS SSM Parameter Store for other pipelines
+resource "aws_ssm_parameter" "platform_contract" {
+  for_each = {
+    "vpc_id"                 = module.vpc.vpc_id
+    "ecr_repository_url"     = module.ecr.repository_url
+    "eks_cluster_name"       = module.eks.cluster_name
+    "eks_cluster_endpoint"   = module.eks.cluster_endpoint
+    "emr_virtual_cluster_id" = module.emr_on_eks.emr_virtual_cluster_id
+    "emr_execution_role_arn" = module.emr_on_eks.emr_execution_role_arn
+    "emr_namespace"          = var.emr_namespace
+  }
+
+  name        = "/platform/${var.environment}/${each.key}"
+  description = "Platform environment contract parameter: ${each.key}"
+  type        = "String"
+  value       = each.value
+  overwrite   = true
+}

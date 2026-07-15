@@ -14,7 +14,7 @@ emrOnEks:
 
 # Resource quotas for the Spark namespace to ensure platform stability
 resourceQuotas:
-  enabled: true
+  enabled: false
   limits:
     cpu: "100"
     memory: "400Gi"
