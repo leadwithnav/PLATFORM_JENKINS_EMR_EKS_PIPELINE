@@ -125,9 +125,11 @@ resource "aws_emrcontainers_virtual_cluster" "this" {
     Name = "${var.environment}-emr-virtual-cluster"
   }
 
-  # Ensure cluster is fully configured and operational before registration
+  # Ensure EKS Access Entry and K8s RBAC mapping are active BEFORE registering
   depends_on = [
-    kubernetes_namespace.emr_namespace
+    kubernetes_namespace.emr_namespace,
+    aws_eks_access_entry.emr_service_role,
+    kubernetes_role_binding.emr_service
   ]
 }
 
@@ -176,6 +178,33 @@ resource "kubernetes_role" "emr_service" {
   }
 }
 
-# Note: The platform team needs to map AWSServiceRoleForEMRContainers in the EKS aws-auth ConfigMap
-# to the system username "emr-containers" with group "system:authenticated".
-# We provide instructions on how the Jenkins pipeline manages this setup in the README.
+# Bind the system username "emr-containers" mapped from EMR service role to this namespace RBAC
+resource "kubernetes_role_binding" "emr_service" {
+  metadata {
+    name      = "emr-containers-service-role-binding"
+    namespace = kubernetes_namespace.emr_namespace.metadata[0].name
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.emr_service.metadata[0].name
+  }
+
+  subject {
+    kind      = "User"
+    name      = "emr-containers"
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
+# 5. Access Entry to map the AWS EMR Service Linked Role in EKS
+data "aws_caller_identity" "current" {}
+
+resource "aws_eks_access_entry" "emr_service_role" {
+  cluster_name      = var.eks_cluster_name
+  principal_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForEMRContainers"
+  kubernetes_groups = ["system:authenticated"]
+  username          = "emr-containers"
+  type              = "STANDARD"
+}
