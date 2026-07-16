@@ -125,11 +125,10 @@ resource "aws_emrcontainers_virtual_cluster" "this" {
     Name = "${var.environment}-emr-virtual-cluster"
   }
 
-  # Ensure EKS auth mapping and K8s RBAC mapping are active BEFORE registering
+  # Ensure EKS auth mapping and K8s RBAC mapping are active and propagated BEFORE registering
   depends_on = [
     kubernetes_namespace.emr_namespace,
-    kubernetes_config_map_v1_data.aws_auth,
-    kubernetes_role_binding.emr_service
+    time_sleep.wait_for_aws_auth
   ]
 }
 
@@ -223,4 +222,14 @@ resource "kubernetes_config_map_v1_data" "aws_auth" {
   }
 
   force = true
+}
+
+# 6. Sleep delay to allow EKS auth mapping to propagate to the cluster
+resource "time_sleep" "wait_for_aws_auth" {
+  depends_on = [
+    kubernetes_config_map_v1_data.aws_auth,
+    kubernetes_role_binding.emr_service
+  ]
+
+  create_duration = "60s"
 }
